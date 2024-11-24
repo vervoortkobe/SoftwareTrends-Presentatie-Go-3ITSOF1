@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fiber/handlers"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -8,13 +9,13 @@ import (
 
 func setupRoutes(app *fiber.App) {
 	app.Get("/register", showRegisterPage)
-	app.Post("/register", register)
+	app.Post("/register", handlers.Register)
 	app.Get("/login", showLoginPage)
-	app.Post("/login", login)
+	app.Post("/login", handlers.Login)
 	app.Get("/", showMainPage)
-	app.Post("/posts", createPost)
-	app.Put("/posts/:id", editPost)
-	app.Delete("/posts/:id", deletePost)
+	app.Post("/posts", handlers.CreatePost)
+	app.Put("/posts/:id", handlers.EditPost)
+	app.Delete("/posts/:id", handlers.DeletePost)
 }
 
 func showRegisterPage(c *fiber.Ctx) error {
@@ -31,7 +32,7 @@ func showMainPage(c *fiber.Ctx) error {
 		return c.Redirect("/login")
 	}
 
-	posts, err := fetchAllPosts()
+	posts, err := handlers.FetchAllPosts()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("Error fetching posts")
 	}

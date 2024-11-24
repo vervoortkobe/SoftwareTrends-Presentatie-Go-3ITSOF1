@@ -1,4 +1,4 @@
-package main
+package database
 
 import (
 	"database/sql"
@@ -7,11 +7,11 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var db *sql.DB
+var DB *sql.DB
 
-func initDB() {
+func InitDB() {
 	var err error
-	db, err = sql.Open("sqlite3", "./sqlite.db")
+	DB, err = sql.Open("sqlite3", "./sqlite.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,7 +31,7 @@ func initDB() {
 		FOREIGN KEY (user_id) REFERENCES users(id)
 	);`
 
-	if _, err := db.Exec(createTable); err != nil {
+	if _, err := DB.Exec(createTable); err != nil {
 		log.Fatal(err)
 	}
 }

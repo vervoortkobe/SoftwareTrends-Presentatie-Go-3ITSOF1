@@ -1,6 +1,7 @@
-package main
+package handlers
 
 import (
+	"fiber/database"
 	"log"
 	"net/http"
 
@@ -8,7 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func register(c *fiber.Ctx) error {
+func Register(c *fiber.Ctx) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 
@@ -17,7 +18,7 @@ func register(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).SendString("Error hashing password")
 	}
 
-	_, err = db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", username, hashedPassword)
+	_, err = database.DB.Exec("INSERT INTO users (username, password) VALUES (?, ?)", username, hashedPassword)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Username already exists")
 	}
@@ -26,12 +27,12 @@ func register(c *fiber.Ctx) error {
 	return c.Status(http.StatusCreated).SendString("User registered successfully")
 }
 
-func login(c *fiber.Ctx) error {
+func Login(c *fiber.Ctx) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 
 	var storedHashedPassword string
-	err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&storedHashedPassword)
+	err := database.DB.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&storedHashedPassword)
 	if err != nil {
 		return c.Status(http.StatusUnauthorized).SendString("Invalid username or password")
 	}

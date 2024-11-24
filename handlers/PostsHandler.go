@@ -1,22 +1,23 @@
-package main
+package handlers
 
 import (
+	"fiber/database"
 	"log"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func fetchAllPosts() ([]Post, error) {
-	rows, err := db.Query("SELECT p.id, p.title, p.content, u.username, p.user_id FROM posts p JOIN users u ON p.user_id = u.id ORDER BY p.id DESC")
+func FetchAllPosts() ([]database.Post, error) {
+	rows, err := database.DB.Query("SELECT p.id, p.title, p.content, u.username, p.user_id FROM posts p JOIN users u ON p.user_id = u.id ORDER BY p.id DESC")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var posts []Post
+	var posts []database.Post
 	for rows.Next() {
-		var post Post
+		var post database.Post
 		if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID); err != nil {
 			return nil, err
 		}
@@ -25,7 +26,7 @@ func fetchAllPosts() ([]Post, error) {
 	return posts, nil
 }
 
-func createPost(c *fiber.Ctx) error {
+func CreatePost(c *fiber.Ctx) error {
 	user := c.Locals("user")
 	if user == nil {
 		return c.Status(http.StatusUnauthorized).SendString("You must be logged in to create a post")
@@ -34,7 +35,7 @@ func createPost(c *fiber.Ctx) error {
 	title := c.FormValue("title")
 	content := c.FormValue("content")
 
-	_, err := db.Exec("INSERT INTO posts (user_id, title, content) VALUES (?, ?, ?)", user.(map[string]interface{})["ID"], title, content)
+	_, err := database.DB.Exec("INSERT INTO posts (user_id, title, content) VALUES (?, ?, ?)", user.(map[string]interface{})["ID"], title, content)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("Error creating post")
 	}
@@ -44,7 +45,7 @@ func createPost(c *fiber.Ctx) error {
 	return c.Redirect("/")
 }
 
-func editPost(c *fiber.Ctx) error {
+func EditPost(c *fiber.Ctx) error {
 	user := c.Locals("user")
 	if user == nil {
 		return c.Status(http.StatusUnauthorized).SendString("You must be logged in to edit a post")
@@ -54,7 +55,7 @@ func editPost(c *fiber.Ctx) error {
 	title := c.FormValue("title")
 	content := c.FormValue("content")
 
-	result, err := db.Exec("UPDATE posts SET title = ?, content = ? WHERE id = ? AND user_id = ?", title, content, postID, user.(map[string]interface{})["ID"])
+	result, err := database.DB.Exec("UPDATE posts SET title = ?, content = ? WHERE id = ? AND user_id = ?", title, content, postID, user.(map[string]interface{})["ID"])
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("Error updating post")
 	}
@@ -73,13 +74,13 @@ func editPost(c *fiber.Ctx) error {
 	return c.Redirect("/")
 }
 
-func deletePost(c *fiber.Ctx) error {
+func DeletePost(c *fiber.Ctx) error {
 	user := c.Locals("user")
 	if user == nil {
 		return c.Status(http.StatusUnauthorized).SendString("You must be logged in to delete a post")
 	}
 	postID := c.Params("id")
-	result, err := db.Exec("DELETE FROM posts WHERE id = ? AND user_id = ?", postID, user.(map[string]interface{})["ID"])
+	result, err := database.DB.Exec("DELETE FROM posts WHERE id = ? AND user_id = ?", postID, user.(map[string]interface{})["ID"])
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).SendString("Error deleting post")
 	}
