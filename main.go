@@ -13,5 +13,6 @@ func main() {
 
 	setupRoutes(app)
 
+	log.Printf("⚡ | WebServer listening on [http://localhost%s]!\n", ":3000")
 	log.Fatal(app.Listen(":3000"))
 }

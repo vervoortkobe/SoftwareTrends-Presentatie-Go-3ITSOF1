@@ -19,11 +19,11 @@ func setupRoutes(app *fiber.App) {
 }
 
 func showRegisterPage(c *fiber.Ctx) error {
-	return c.SendFile("templates/register.html")
+	return c.SendFile("views/register.html")
 }
 
 func showLoginPage(c *fiber.Ctx) error {
-	return c.SendFile("templates/login.html")
+	return c.SendFile("views/login.html")
 }
 
 func showMainPage(c *fiber.Ctx) error {
