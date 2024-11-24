@@ -31,8 +31,8 @@
             <p>{{ .Content }}</p>
             <p>Gepost door: {{ .Username }}</p>
             {{ if eq .UserID $.User.ID }}
-            <button onclick="openEditModal({{ .ID }}, '{{ .Title }}', '{{ .Content }}')">Wijzig</button>
-            <button onclick="deletePost({{ .ID }})">Verwijder</button>
+            <button onclick="openEditModal('{{ .ID }}', '{{ .Title }}', '{{ .Content }}')">Wijzig</button>
+            <button onclick="deletePost('{{ .ID }}')">Verwijder</button>
             {{ end }}
         </li>
         {{ end }}
