@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fiber/database"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -65,12 +66,14 @@ func CreatePost(c *fiber.Ctx) error {
 	`, userId, input.Title, input.Content)
 
 	if err != nil {
+		log.Printf("Failed to create post: %v", err)
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to create post",
 		})
 	}
 
 	id, _ := result.LastInsertId()
+	log.Printf("Post created: User ID %d, Title: %s", userId, input.Title)
 	return c.JSON(fiber.Map{
 		"success": true,
 		"id":      id,
@@ -116,11 +119,13 @@ func UpdatePost(c *fiber.Ctx) error {
 	_, err = database.DB.Exec("UPDATE posts SET title = ?, content = ? WHERE id = ? AND user_id = ?",
 		input.Title, input.Content, postId, userId)
 	if err != nil {
+		log.Printf("Failed to update post ID %d: %v", postId, err)
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to update post",
 		})
 	}
 
+	log.Printf("Post edited: ID %d, New Title: %s", postId, input.Title)
 	return c.JSON(fiber.Map{
 		"success": true,
 	})
@@ -152,11 +157,13 @@ func DeletePost(c *fiber.Ctx) error {
 
 	_, err = database.DB.Exec("DELETE FROM posts WHERE id = ? AND user_id = ?", postId, userId)
 	if err != nil {
+		log.Printf("Failed to delete post ID %d: %v", postId, err)
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to delete post",
 		})
 	}
 
+	log.Printf("Post deleted: ID %d", postId)
 	return c.JSON(fiber.Map{
 		"success": true,
 	})
