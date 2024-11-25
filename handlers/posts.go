@@ -2,95 +2,162 @@ package handlers
 
 import (
 	"fiber/database"
-	"log"
-	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func FetchAllPosts() ([]database.Post, error) {
-	rows, err := database.DB.Query("SELECT p.id, p.title, p.content, u.username, p.user_id FROM posts p JOIN users u ON p.user_id = u.id ORDER BY p.id DESC")
+func GetPosts(c *fiber.Ctx) error {
+	currentUserId := c.Locals("userId").(int)
+
+	rows, err := database.DB.Query(`
+		SELECT p.id, p.title, p.content, p.user_id, u.username 
+		FROM posts p 
+		JOIN users u ON p.user_id = u.id 
+		ORDER BY p.id DESC
+	`)
 	if err != nil {
-		return nil, err
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to fetch posts",
+		})
 	}
 	defer rows.Close()
 
-	var posts []database.Post
+	var posts []fiber.Map
 	for rows.Next() {
-		var post database.Post
-		if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID); err != nil {
-			return nil, err
+		var id, userId int
+		var title, content, username string
+		if err := rows.Scan(&id, &title, &content, &userId, &username); err != nil {
+			continue
 		}
-		posts = append(posts, post)
+		posts = append(posts, fiber.Map{
+			"id":       id,
+			"title":    title,
+			"content":  content,
+			"userId":   userId,
+			"username": username,
+			"isOwner":  userId == currentUserId,
+		})
 	}
-	return posts, nil
+
+	return c.JSON(fiber.Map{
+		"posts": posts,
+	})
 }
 
 func CreatePost(c *fiber.Ctx) error {
-	user := c.Locals("user")
-	if user == nil {
-		return c.Status(http.StatusUnauthorized).SendString("You must be logged in to create a post")
+	type PostInput struct {
+		Title   string `json:"title"`
+		Content string `json:"content"`
 	}
 
-	title := c.FormValue("title")
-	content := c.FormValue("content")
+	var input PostInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Invalid input",
+		})
+	}
 
-	_, err := database.DB.Exec("INSERT INTO posts (user_id, title, content) VALUES (?, ?, ?)", user.(map[string]interface{})["ID"], title, content)
+	userId := c.Locals("userId").(int)
+
+	result, err := database.DB.Exec(`
+		INSERT INTO posts (user_id, title, content)
+		VALUES (?, ?, ?)
+	`, userId, input.Title, input.Content)
+
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).SendString("Error creating post")
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to create post",
+		})
 	}
 
-	log.Printf("Post created by user %s: %s\n", user.(map[string]interface{})["Username"], title)
-
-	return c.Redirect("/")
+	id, _ := result.LastInsertId()
+	return c.JSON(fiber.Map{
+		"success": true,
+		"id":      id,
+	})
 }
 
-func EditPost(c *fiber.Ctx) error {
-	user := c.Locals("user")
-	if user == nil {
-		return c.Status(http.StatusUnauthorized).SendString("You must be logged in to edit a post")
-	}
-
-	postID := c.Params("id")
-	title := c.FormValue("title")
-	content := c.FormValue("content")
-
-	result, err := database.DB.Exec("UPDATE posts SET title = ?, content = ? WHERE id = ? AND user_id = ?", title, content, postID, user.(map[string]interface{})["ID"])
+func UpdatePost(c *fiber.Ctx) error {
+	postId, err := c.ParamsInt("id")
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).SendString("Error updating post")
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Invalid post ID",
+		})
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	type PostUpdate struct {
+		Title   string `json:"title"`
+		Content string `json:"content"`
+	}
+
+	var input PostUpdate
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Invalid input",
+		})
+	}
+
+	userId := c.Locals("userId").(int)
+
+	var postUserId int
+	err = database.DB.QueryRow("SELECT user_id FROM posts WHERE id = ?", postId).Scan(&postUserId)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).SendString("Error checking affected rows")
+		return c.Status(404).JSON(fiber.Map{
+			"error": "Post not found",
+		})
 	}
 
-	if rowsAffected == 0 {
-		return c.Status(http.StatusNotFound).SendString("Post not found or you do not have permission to edit this post")
+	if postUserId != userId {
+		return c.Status(403).JSON(fiber.Map{
+			"error": "Not authorized to edit this post",
+		})
 	}
 
-	log.Printf("Post edited by user %s: %s\n", user.(map[string]interface{})["Username"], title)
+	_, err = database.DB.Exec("UPDATE posts SET title = ?, content = ? WHERE id = ? AND user_id = ?",
+		input.Title, input.Content, postId, userId)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to update post",
+		})
+	}
 
-	return c.Redirect("/")
+	return c.JSON(fiber.Map{
+		"success": true,
+	})
 }
 
 func DeletePost(c *fiber.Ctx) error {
-	user := c.Locals("user")
-	if user == nil {
-		return c.Status(http.StatusUnauthorized).SendString("You must be logged in to delete a post")
-	}
-	postID := c.Params("id")
-	result, err := database.DB.Exec("DELETE FROM posts WHERE id = ? AND user_id = ?", postID, user.(map[string]interface{})["ID"])
+	postId, err := c.ParamsInt("id")
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).SendString("Error deleting post")
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Invalid post ID",
+		})
 	}
-	rowsAffected, err := result.RowsAffected()
+
+	userId := c.Locals("userId").(int)
+
+	var postUserId int
+	err = database.DB.QueryRow("SELECT user_id FROM posts WHERE id = ?", postId).Scan(&postUserId)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).SendString("Error checking affected rows")
+		return c.Status(404).JSON(fiber.Map{
+			"error": "Post not found",
+		})
 	}
-	if rowsAffected == 0 {
-		return c.Status(http.StatusNotFound).SendString("Post not found or you do not have permission to delete this post")
+
+	if postUserId != userId {
+		return c.Status(403).JSON(fiber.Map{
+			"error": "Not authorized to delete this post",
+		})
 	}
-	log.Printf("Post deleted by user %s: Post ID %s\n", user.(map[string]interface{})["Username"], postID)
-	return c.SendStatus(http.StatusNoContent)
+
+	_, err = database.DB.Exec("DELETE FROM posts WHERE id = ? AND user_id = ?", postId, userId)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to delete post",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+	})
 }

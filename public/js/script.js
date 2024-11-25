@@ -67,65 +67,110 @@ async function loadPosts() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  loadUserData();
-  loadPosts();
+  document
+    .getElementById("postForm")
+    .addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const title = document.getElementById("title").value;
+      const content = document.getElementById("content").value;
+
+      try {
+        const response = await fetch("/api/posts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title,
+            content,
+          }),
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          // Clear form
+          document.getElementById("title").value = "";
+          document.getElementById("content").value = "";
+          // Reload posts
+          loadPosts();
+        } else {
+          const data = await response.json();
+          alert(data.error || "Failed to create post");
+        }
+      } catch (error) {
+        console.error("Error creating post:", error);
+        alert("An error occurred while creating the post");
+      }
+    });
 });
+
+async function deletePost(postId) {
+  if (!confirm("Are you sure you want to delete this post?")) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/posts/${postId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (response.ok) {
+      loadPosts();
+    } else {
+      const data = await response.json();
+      alert(data.error || "Failed to delete post");
+    }
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    alert("An error occurred while deleting the post");
+  }
+}
 
 function openEditModal(postId, title, content) {
   document.getElementById("editPostId").value = postId;
   document.getElementById("editTitle").value = title;
   document.getElementById("editContent").value = content;
-  document.getElementById("editModal").style.display = "block";
+  const editModal = new bootstrap.Modal(document.getElementById("editModal"));
+  editModal.show();
 }
 
-document.getElementById("closeModal").onclick = function () {
-  document.getElementById("editModal").style.display = "none";
-};
-
-document.getElementById("discardEdit").onclick = function () {
-  document.getElementById("editModal").style.display = "none";
-};
-
-window.onclick = function (event) {
-  if (event.target == document.getElementById("editModal")) {
-    document.getElementById("editModal").style.display = "none";
-  }
-};
-
-document.getElementById("editForm").onsubmit = function (event) {
-  event.preventDefault();
+async function handleEditSubmit() {
   const postId = document.getElementById("editPostId").value;
   const title = document.getElementById("editTitle").value;
   const content = document.getElementById("editContent").value;
 
-  fetch(`/posts/${postId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      title: title,
-      content: content,
-    }),
-  }).then((response) => {
-    if (response.ok) {
-      location.reload();
-    } else {
-      alert("Error editing post");
-    }
-  });
-};
-
-function deletePost(postId) {
-  if (confirm("Weet je zeker dat je deze post wilt verwijderen?")) {
-    fetch(`/posts/${postId}`, {
-      method: "DELETE",
-    }).then((response) => {
-      if (response.ok) {
-        document.getElementById(`post-${postId}`).remove();
-      } else {
-        alert("Error deleting post");
-      }
+  try {
+    const response = await fetch(`/api/posts/${postId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title,
+        content,
+      }),
+      credentials: "include",
     });
+
+    if (response.ok) {
+      const editModal = bootstrap.Modal.getInstance(
+        document.getElementById("editModal")
+      );
+      editModal.hide();
+      loadPosts();
+    } else {
+      const data = await response.json();
+      alert(data.error || "Failed to update post");
+    }
+  } catch (error) {
+    console.error("Error updating post:", error);
+    alert("An error occurred while updating the post");
   }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadUserData();
+  loadPosts();
+});

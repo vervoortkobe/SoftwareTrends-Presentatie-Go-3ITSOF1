@@ -16,6 +16,13 @@ type Credentials struct {
 	Password string `json:"password"`
 }
 
+func CheckLogin(c *fiber.Ctx) error {
+	return c.JSON(fiber.Map{
+		"success": true,
+		"user":    c.Locals("user"),
+	})
+}
+
 func Login(c *fiber.Ctx) error {
 	var input struct {
 		Username string `json:"username"`
@@ -32,7 +39,6 @@ func Login(c *fiber.Ctx) error {
 
 	log.Printf("Login attempt for user: %s", input.Username)
 
-	// Get user from database
 	var storedPassword string
 	var userId int
 	err := database.DB.QueryRow("SELECT id, password FROM users WHERE username = ?", input.Username).Scan(&userId, &storedPassword)
@@ -50,7 +56,6 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// Check password
 	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(input.Password)); err != nil {
 		log.Printf("Login failed: Invalid password for user: %s", input.Username)
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -59,11 +64,9 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// Generate session token
 	sessionToken := uuid.New().String()
 	log.Printf("Generated session token for user %s", input.Username)
 
-	// Store session in database
 	_, err = database.DB.Exec("INSERT INTO sessions (user_id, token, created_at) VALUES (?, ?, ?)",
 		userId, sessionToken, time.Now())
 	if err != nil {
@@ -74,7 +77,6 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// Set session cookie
 	c.Cookie(&fiber.Cookie{
 		Name:     "session",
 		Value:    sessionToken,
@@ -120,7 +122,6 @@ func Register(c *fiber.Ctx) error {
 }
 
 func Logout(c *fiber.Ctx) error {
-	// Get session token
 	sessionToken := c.Cookies("session")
 	if sessionToken != "" {
 		// Delete session from database
@@ -130,7 +131,6 @@ func Logout(c *fiber.Ctx) error {
 		}
 	}
 
-	// Clear session cookie
 	c.Cookie(&fiber.Cookie{
 		Name:     "session",
 		Value:    "",
