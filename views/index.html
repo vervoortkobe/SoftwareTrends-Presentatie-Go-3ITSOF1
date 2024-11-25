@@ -15,7 +15,7 @@
 <body class="bg-light">
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="text-primary mb-0">Welkom, <span id="usernameDisplay">{{ .User.Username }}</span></h1>
+            <h1 class="text-primary mb-0">Welkom, <span id="usernameDisplay">Loading...</span></h1>
             <button onclick="handleLogout()" class="btn btn-outline-danger">Logout</button>
         </div>
 
@@ -24,7 +24,7 @@
                 <h2 class="mb-0">Maak een Post</h2>
             </div>
             <div class="card-body">
-                <form action="/posts" method="POST">
+                <form id="postForm" class="needs-validation" novalidate>
                     <div class="mb-3">
                         <label for="title" class="form-label">Post Title:</label>
                         <input type="text" class="form-control" id="title" name="title" required>
@@ -43,59 +43,13 @@
                 <h2 class="mb-0">Alle Posts</h2>
             </div>
             <div class="card-body">
-                {{ if .Posts }}
                 <div id="postList" class="list-group">
-                    {{ range .Posts }}
-                    <div id="post-{{ .ID }}" class="list-group-item">
-                        <h3 class="h5 mb-2">{{ .Title }}</h3>
-                        <p class="mb-2">{{ .Content }}</p>
-                        <p class="text-muted small mb-2">Gepost door: {{ .Username }}</p>
-                        {{ if eq .UserID $.User.ID }}
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary"
-                                onclick="openEditModal('{{ .ID }}', '{{ .Title }}', '{{ .Content }}')">Wijzig</button>
-                            <button class="btn btn-sm btn-outline-danger"
-                                onclick="deletePost('{{ .ID }}')">Verwijder</button>
-                        </div>
-                        {{ end }}
-                    </div>
-                    {{ end }}
+                    <!-- Posts will be loaded here -->
                 </div>
-                {{ else }}
-                <p class="text-muted">Geen Posts beschikbaar.</p>
-                {{ end }}
             </div>
         </div>
     </div>
 
-    <!-- Edit Modal -->
-    <div id="editModal" class="modal fade" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Wijzig Post</h5>
-                    <button type="button" class="btn-close" id="closeModal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editForm" method="POST">
-                        <input type="hidden" id="editPostId" name="postId">
-                        <div class="mb-3">
-                            <label for="editTitle" class="form-label">Titel:</label>
-                            <input type="text" class="form-control" id="editTitle" name="title" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editContent" class="form-label">Inhoud:</label>
-                            <textarea class="form-control" id="editContent" name="content" rows="3" required></textarea>
-                        </div>
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-secondary" id="discardEdit">Annuleer</button>
-                            <button type="submit" class="btn btn-primary">Wijzig</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
 </body>
 
 </html>
