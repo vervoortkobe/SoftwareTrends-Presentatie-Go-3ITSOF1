@@ -116,6 +116,34 @@ func Register(c *fiber.Ctx) error {
 		})
 	}
 
+	// Log in the user by creating a session
+	var userId int
+	err = database.DB.QueryRow("SELECT id FROM users WHERE username = ?", creds.Username).Scan(&userId)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to retrieve user ID",
+		})
+	}
+
+	sessionToken := uuid.New().String()
+	_, err = database.DB.Exec("INSERT INTO sessions (user_id, token, created_at) VALUES (?, ?, ?)",
+		userId, sessionToken, time.Now())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to create session",
+		})
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "session",
+		Value:    sessionToken,
+		Expires:  time.Now().Add(24 * time.Hour),
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Strict",
+		Path:     "/",
+	})
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "User created successfully",
 	})

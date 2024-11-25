@@ -23,8 +23,8 @@ document.getElementById('registerForm').addEventListener('submit', async functio
         });
 
         if (response.ok) {
-            alert('Registration successful! Please login.');
-            window.location.href = '/login';
+            alert('Registration successful! Redirecting to home...');
+            window.location.href = '/';
         } else {
             const data = await response.json();
             alert(data.error || 'Registration failed. Please try again.');
