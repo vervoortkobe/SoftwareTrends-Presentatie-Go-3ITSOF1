@@ -6,6 +6,7 @@ import (
 	"fiber/database"
 	"fiber/middleware"
 	"fiber/handlers"
+	"time"
 )
 
 func main() {
@@ -26,11 +27,23 @@ func main() {
 		sessionToken := c.Cookies("session")
 		if sessionToken != "" {
 			// Verify session in database
-			var exists bool
-			err := database.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM sessions WHERE token = ?)", sessionToken).Scan(&exists)
-			if err == nil && exists {
+			var userId int
+			var createdAt time.Time
+			err := database.DB.QueryRow("SELECT user_id, created_at FROM sessions WHERE token = ?", sessionToken).Scan(&userId, &createdAt)
+			if err == nil && time.Since(createdAt) < 24*time.Hour {
+				log.Printf("User already authenticated, redirecting to home")
 				return c.Redirect("/")
 			}
+			// If session is invalid or expired, clear the cookie
+			c.Cookie(&fiber.Cookie{
+				Name:     "session",
+				Value:    "",
+				Expires:  time.Now().Add(-time.Hour),
+				HTTPOnly: true,
+				Secure:   true,
+				SameSite: "Strict",
+				Path:     "/",
+			})
 		}
 		return c.SendFile("./views/login.html")
 	})
