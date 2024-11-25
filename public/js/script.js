@@ -119,11 +119,19 @@ async function deletePost(postId) {
 }
 
 function openEditModal(postId, title, content) {
-    document.getElementById('editPostId').value = postId;
-    document.getElementById('editTitle').value = title;
-    document.getElementById('editContent').value = content;
-    const editModal = new bootstrap.Modal(document.getElementById('editModal'));
-    editModal.show();
+    const editPostId = document.getElementById('editPostId');
+    const editTitle = document.getElementById('editTitle');
+    const editContent = document.getElementById('editContent');
+
+    if (editPostId && editTitle && editContent) {
+        editPostId.value = postId;
+        editTitle.value = title;
+        editContent.value = content;
+        const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+        editModal.show();
+    } else {
+        console.error('Edit modal elements not found');
+    }
 }
 
 async function handleEditSubmit() {
