@@ -66,14 +66,14 @@ func CreatePost(c *fiber.Ctx) error {
 	`, userId, input.Title, input.Content)
 
 	if err != nil {
-		fmt.Printf("Failed to create post: %v", err)
+		fmt.Printf("\nFailed to create post: %v", err)
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to create post",
 		})
 	}
 
 	id, _ := result.LastInsertId()
-	fmt.Printf("Post created: User ID %d, Title: %s", userId, input.Title)
+	fmt.Printf("\nPost created: User ID %d, Title: %s", userId, input.Title)
 	return c.JSON(fiber.Map{
 		"success": true,
 		"id":      id,
@@ -119,13 +119,13 @@ func UpdatePost(c *fiber.Ctx) error {
 	_, err = database.DB.Exec("UPDATE posts SET title = ?, content = ? WHERE id = ? AND user_id = ?",
 		input.Title, input.Content, postId, userId)
 	if err != nil {
-		fmt.Printf("Failed to update post ID %d: %v", postId, err)
+		fmt.Printf("\nFailed to update post ID %d: %v", postId, err)
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to update post",
 		})
 	}
 
-	fmt.Printf("Post edited: ID %d, New Title: %s", postId, input.Title)
+	fmt.Printf("\nPost edited: ID %d, New Title: %s", postId, input.Title)
 	return c.JSON(fiber.Map{
 		"success": true,
 	})
@@ -157,13 +157,13 @@ func DeletePost(c *fiber.Ctx) error {
 
 	_, err = database.DB.Exec("DELETE FROM posts WHERE id = ? AND user_id = ?", postId, userId)
 	if err != nil {
-		fmt.Printf("Failed to delete post ID %d: %v", postId, err)
+		fmt.Printf("\nFailed to delete post ID %d: %v", postId, err)
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to delete post",
 		})
 	}
 
-	fmt.Printf("Post deleted: ID %d", postId)
+	fmt.Printf("\nPost deleted: ID %d", postId)
 	return c.JSON(fiber.Map{
 		"success": true,
 	})

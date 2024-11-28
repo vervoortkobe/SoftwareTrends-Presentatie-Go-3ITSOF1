@@ -15,7 +15,7 @@ func LoginPage(c *fiber.Ctx) error {
 		var createdAt time.Time
 		err := database.DB.QueryRow("SELECT user_id, created_at FROM sessions WHERE token = ?", sessionToken).Scan(&userId, &createdAt)
 		if err == nil && time.Since(createdAt) < 24*time.Hour {
-			fmt.Printf("User already authenticated, redirecting to home")
+			fmt.Printf("\nUser already authenticated, redirecting to home")
 			return c.Redirect("/")
 		}
 		c.Cookie(&fiber.Cookie{

@@ -30,26 +30,26 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&input); err != nil {
-		fmt.Printf("Login error: Failed to parse body: %v", err)
+		fmt.Printf("\nLogin error: Failed to parse body: %v", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "Invalid request body",
 		})
 	}
 
-	fmt.Printf("Login attempt for user: %s", input.Username)
+	fmt.Printf("\nLogin attempt for user: %s", input.Username)
 
 	var storedPassword string
 	var userId int
 	err := database.DB.QueryRow("SELECT id, password FROM users WHERE username = ?", input.Username).Scan(&userId, &storedPassword)
 	if err == sql.ErrNoRows {
-		fmt.Printf("Login failed: User not found: %s", input.Username)
+		fmt.Printf("\nLogin failed: User not found: %s", input.Username)
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"success": false,
 			"error":   "Invalid credentials",
 		})
 	} else if err != nil {
-		fmt.Printf("Login error: Database error: %v", err)
+		fmt.Printf("\nLogin error: Database error: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"error":   "Internal server error",
@@ -57,7 +57,7 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(input.Password)); err != nil {
-		fmt.Printf("Login failed: Invalid password for user: %s", input.Username)
+		fmt.Printf("\nLogin failed: Invalid password for user: %s", input.Username)
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"success": false,
 			"error":   "Invalid credentials",
@@ -65,12 +65,12 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	sessionToken := uuid.New().String()
-	fmt.Printf("Generated session token for user %s", input.Username)
+	fmt.Printf("\nGenerated session token for user %s", input.Username)
 
 	_, err = database.DB.Exec("INSERT INTO sessions (user_id, token, created_at) VALUES (?, ?, ?)",
 		userId, sessionToken, time.Now())
 	if err != nil {
-		fmt.Printf("Login error: Failed to store session: %v", err)
+		fmt.Printf("\nLogin error: Failed to store session: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"error":   "Failed to create session",
@@ -87,7 +87,7 @@ func Login(c *fiber.Ctx) error {
 		Path:     "/",
 	})
 
-	fmt.Printf("Login successful for user: %s", input.Username)
+	fmt.Printf("\nLogin successful for user: %s", input.Username)
 	return c.JSON(fiber.Map{
 		"success": true,
 		"message": "Login successful",
@@ -155,7 +155,7 @@ func Logout(c *fiber.Ctx) error {
 		// Delete session from database
 		_, err := database.DB.Exec("DELETE FROM sessions WHERE token = ?", sessionToken)
 		if err != nil {
-			fmt.Printf("Logout error: Failed to delete session: %v", err)
+			fmt.Printf("\nLogout error: Failed to delete session: %v", err)
 		}
 	}
 
@@ -169,7 +169,7 @@ func Logout(c *fiber.Ctx) error {
 		Path:     "/",
 	})
 
-	fmt.Printf("User logged out successfully")
+	fmt.Printf("\nUser logged out successfully")
 	return c.JSON(fiber.Map{
 		"success": true,
 		"message": "Logged out successfully",
