@@ -88,42 +88,44 @@ func padRight(str string, length int) string {
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
-	fmt.Printf("\nGo Benchmark Results:\n")
-	fmt.Printf("-------------------\n\n")
+	fmt.Println("Go Benchmark Results:")
+	fmt.Println("-------------------")
 
 	// Counter benchmark
 	start := time.Now()
 	sum := counter(100000)
 	duration := time.Since(start).Nanoseconds()
-	fmt.Printf("%s %10.6f ms\n", padRight(fmt.Sprintf("Counter(%d)", sum), 70), float64(duration)/1000000)
+	fmt.Printf("%s %10.6f ms\n", padRight(fmt.Sprintf("1. Counter: %d", sum), 70), float64(duration)/1000000)
 
 	// Fibonacci benchmark
 	start = time.Now()
 	fibResult := fibonacci(100)
 	duration = time.Since(start).Nanoseconds()
-	fmt.Printf("%s %10.6f ms\n", padRight(fmt.Sprintf("Fibonacci(%d)", fibResult), 70), float64(duration)/1000000)
+	fmt.Printf("%s %10.6f ms\n", padRight(fmt.Sprintf("2. Fibonacci: %d", fibResult), 70), float64(duration)/1000000)
 
 	// QuickSort benchmark
 	quickSortArr := generateRandomArray(1000)
-	inputStr := printArraySample(quickSortArr, "QuickSort Input")
+	inputStr := printArraySample(quickSortArr, "   - Input")
+	fmt.Println("3. Quicksort:")
 	fmt.Println(inputStr)
 
 	start = time.Now()
 	sortedQuick := quickSort(quickSortArr)
 	duration = time.Since(start).Nanoseconds()
 
-	outputStr := printArraySample(sortedQuick, "Output")
+	outputStr := printArraySample(sortedQuick, "   - Output")
 	fmt.Printf("%s %10.6f ms\n", padRight(outputStr, 70), float64(duration)/1000000)
 
 	// BubbleSort benchmark
 	bubbleSortArr := generateRandomArray(1000)
-	inputStr = printArraySample(bubbleSortArr, "BubbleSort Input")
+	inputStr = printArraySample(bubbleSortArr, "   - Input")
+	fmt.Println("4. BubbleSort:")
 	fmt.Println(inputStr)
 
 	start = time.Now()
 	sortedBubble := bubbleSort(bubbleSortArr)
 	duration = time.Since(start).Nanoseconds()
 
-	outputStr = printArraySample(sortedBubble, "Output")
+	outputStr = printArraySample(sortedBubble, "   - Output")
 	fmt.Printf("%s %10.6f ms\n", padRight(outputStr, 70), float64(duration)/1000000)
 }
