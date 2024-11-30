@@ -9,7 +9,7 @@ import (
 func GenerateRandomArray(size int) []int {
 	arr := make([]int, size)
 	for i := range arr {
-		arr[i] = rand.Intn(10000)
+		arr[i] = rand.Intn(100_000_000)
 	}
 	return arr
 }

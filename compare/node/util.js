@@ -1,5 +1,7 @@
 function generateRandomArray(size) {
-  return Array.from({ length: size }, () => Math.floor(Math.random() * 10000));
+  return Array.from({ length: size }, () =>
+    Math.floor(Math.random() * 100_000_000)
+  );
 }
 
 function printArraySample(arr, name) {

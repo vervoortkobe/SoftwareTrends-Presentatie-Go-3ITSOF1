@@ -1,12 +1,14 @@
 package main
 
-func Fibonacci(n int) int {
+import "math/big"
+
+func Fibonacci(n int) *big.Int {
 	if n <= 1 {
-		return n
+		return big.NewInt(int64(n))
 	}
-	prev, curr := 0, 1
+	prev, curr := big.NewInt(0), big.NewInt(1)
 	for i := 2; i <= n; i++ {
-		prev, curr = curr, prev+curr
+		prev, curr = curr, new(big.Int).Set(prev).Add(prev, curr)
 	}
 	return curr
 }

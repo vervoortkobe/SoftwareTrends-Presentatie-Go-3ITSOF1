@@ -14,7 +14,7 @@ console.log("------------------------");
 
 // Counter benchmark
 const counterStart = process.hrtime();
-const sum = counter(100000);
+const sum = counter(1_000_000);
 const counterTime = getMilliseconds(process.hrtime(counterStart));
 console.log(
   `${padRight(`1. Counter: ${sum}`, 70)} ${counterTime.padStart(10)} ms`
@@ -22,14 +22,16 @@ console.log(
 
 // Fibonacci benchmark
 const fibStart = process.hrtime();
-const fibResult = fibonacci(100);
+const fibResult = fibonacci(1_000);
 const fibTime = getMilliseconds(process.hrtime(fibStart));
 console.log(
-  `${padRight(`2. Fibonacci: ${fibResult}`, 70)} ${fibTime.padStart(10)} ms`
+  `${padRight(`2. Fibonacci: 10000 - ${fibResult}`, 70)} ${fibTime.padStart(
+    10
+  )} ms`
 );
 
 // QuickSort benchmark
-const quickSortArr = generateRandomArray(1000);
+const quickSortArr = generateRandomArray(10_000);
 console.log("3. Quicksort:");
 console.log(printArraySample(quickSortArr, "   - Input"));
 
@@ -45,7 +47,7 @@ console.log(
 );
 
 // BubbleSort benchmark
-const bubbleSortArr = generateRandomArray(1000);
+const bubbleSortArr = generateRandomArray(10_000);
 console.log("4. Bubblesort:");
 console.log(printArraySample(bubbleSortArr, "   - Input"));
 
